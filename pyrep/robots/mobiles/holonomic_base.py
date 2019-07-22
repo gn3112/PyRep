@@ -68,6 +68,9 @@ class HolonomicBase(MobileBase):
 
         :return: A linear path in the 2d space.
         """
+
+        self.target_z = position[-1]
+
         position_base = self.get_position()
         angle_base = self.get_orientation()[-1]
 
@@ -117,7 +120,8 @@ class HolonomicBase(MobileBase):
 
         :return: A non-linear path (x,y,angle) in the xy configuration space.
         """
-
+        self.target_z = position[-1]
+        
         path = self._get_nonlinear_path_points(
             position, angle, boundaries, path_pts, ignore_collisions, algorithm)
 
