@@ -1,6 +1,7 @@
 from pyrep.backend import vrep, utils
 from pyrep.objects.dummy import Dummy
 from pyrep.objects.shape import Shape
+<<<<<<< HEAD
 from pyrep.objects.joint import Joint
 from pyrep.robots.robot_component import RobotComponent
 from pyrep.const import ConfigurationPathAlgorithms as Algos
@@ -14,12 +15,22 @@ import sys
 import os
 import io
 from math import pi, sqrt
+=======
+from pyrep.robots.robot_component import RobotComponent
+from pyrep.const import ConfigurationPathAlgorithms as Algos
+from pyrep.errors import ConfigurationPathError
+from pyrep.const import PYREP_SCRIPT_TYPE
+from typing import List
+from math import sqrt
+import numpy as np
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
 
 class MobileBase(RobotComponent):
     """Base class representing a robot mobile base with path planning support.
     """
 
+<<<<<<< HEAD
     def __init__(self,
                  count: int,
                  num_wheels: int,
@@ -38,6 +49,14 @@ class MobileBase(RobotComponent):
         :param max_velocity: bounds x,y velocity for motion planning (not implemented for nonholonomic robot).
         :param max_velocity_rotation: bounds yaw velocity for motion planning (not implemented for nonholonomic robot).
         :param max_acceleration: bounds acceleration for motion planning (not implemented for nonholonomic robot).
+=======
+    def __init__(self, count: int, num_wheels: int, name: str):
+        """Count is used for when we have multiple copies of mobile bases.
+
+        :param count: used for multiple copies of robots
+        :param num_wheels: number of actuated wheels
+        :param name: string with robot name (same as base in vrep model).
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
         """
 
         joint_names = ['%s_m_joint%s' % (name, str(i + 1)) for i in
@@ -62,10 +81,17 @@ class MobileBase(RobotComponent):
         # Robot parameters and handle
         self.z_pos = self.get_position()[2]
         self.target_z = self.target_base.get_position()[-1]
+<<<<<<< HEAD
         self.wheel_size = self.wheels[0].get_bounding_box()[1] * 2
         self.wheel_sep = abs(
             self.wheels[0].get_position()[1] - self.wheels[1].get_position()[
                 1]) / 2
+=======
+        self.wheel_radius = self.wheels[0].get_bounding_box()[5]  # Z
+        self.wheel_distance = np.linalg.norm(
+            np.array(self.wheels[0].get_position()) -
+            np.array(self.wheels[1].get_position()))
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
         # Make sure dummies are orphan if loaded with ttm
         self.intermediate_target_base.set_parent(None)
@@ -106,7 +132,11 @@ class MobileBase(RobotComponent):
         vel = [0, 0, 0]
         vel[-1] = position[-1]
         for i in range(2):
+<<<<<<< HEAD
             vel[i] = position[i] / (0.05 * self.wheel_size / 2)  # "0.05 is dt"
+=======
+            vel[i] = position[i] / (0.05 * self.wheel_radius / 2)  # "0.05 is dt"
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
         self.set_base_angular_velocites(vel)
 
@@ -150,7 +180,11 @@ class MobileBase(RobotComponent):
         handle_target_base = self.target_base.get_handle()
 
         # Despite verbosity being set to 0, OMPL spits out a lot of text
+<<<<<<< HEAD
         with suppress_std_out_and_err():
+=======
+        with utils.suppress_std_out_and_err():
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
             _, ret_floats, _, _ = utils.script_call(
                 'getNonlinearPathMobile@PyRep', PYREP_SCRIPT_TYPE,
                 ints=[handle_base, handle_target_base,
@@ -221,6 +255,7 @@ class MobileBase(RobotComponent):
         self.intermediate_target_base.set_parent(None)
         self.target_base.set_parent(None)
         return c
+<<<<<<< HEAD
 
 
 @contextmanager
@@ -266,3 +301,5 @@ def suppress_std_out_and_err():
         finally:
             os.close(saved_stdout_fd)
             # os.close(saved_stderr_fd)
+=======
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7

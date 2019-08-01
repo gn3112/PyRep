@@ -52,4 +52,8 @@ class NonHolonomicConfigurationPath(MobileConfigurationPath):
             actuation, self._path_done = self._mobile.get_base_actuation()
             self._mobile.set_joint_target_velocities(actuation)
 
+<<<<<<< HEAD
         return actuation, self._path_done
+=======
+        return self._path_done
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7

@@ -4,14 +4,10 @@ from pyrep.robots.configuration_paths.arm_configuration_path import (
     ArmConfigurationPath)
 from pyrep.robots.robot_component import RobotComponent
 from pyrep.objects.cartesian_path import CartesianPath
-from pyrep.errors import ConfigurationPathError, IKError
+from pyrep.errors import ConfigurationError, ConfigurationPathError, IKError
 from pyrep.const import ConfigurationPathAlgorithms as Algos
 from pyrep.const import PYREP_SCRIPT_TYPE
-from contextlib import contextmanager
 from typing import List
-import sys
-import os
-import io
 
 
 class Arm(RobotComponent):
@@ -37,6 +33,53 @@ class Arm(RobotComponent):
         self._ik_group = vrep.simGetIkGroupHandle('%s_ik%s' % (name, suffix))
         self._collision_collection = vrep.simGetCollectionHandle(
             '%s_arm%s' % (name, suffix))
+
+    def get_configs_for_tip_pose(self, position: List[float],
+                                 euler: List[float] = None,
+                                 quaternion: List[float] = None,
+                                 ignore_collisions=False,
+                                 trials=300, max_configs=60) -> List[List[float]]:
+
+        """Gets a valid joint configuration for a desired end effector pose.
+        Must specify either rotation in euler or quaternions, but not both!
+        :param position: The x, y, z position of the target.
+        :param euler: The x, y, z orientation of the target (in radians).
+        :param quaternion: A list containing the quaternion (x,y,z,w).
+        :param ignore_collisions: If collision checking should be disabled.
+        :param trials: The maximum number of attempts to reach max_configs
+        :param max_configs: The maximum number of configurations we want to
+            generate before ranking them.
+        :raises: ConfigurationError if no joint configuration could be found.
+        :return: A list of valid joint configurations for the desired end effector pose.
+        """
+
+        if not ((euler is None) ^ (quaternion is None)):
+            raise ConfigurationPathError(
+                'Specify either euler or quaternion values, but not both.')
+
+        prev_pose = self._ik_target.get_pose()
+        self._ik_target.set_position(position)
+        if euler is not None:
+            self._ik_target.set_orientation(euler)
+        elif quaternion is not None:
+            self._ik_target.set_quaternion(quaternion)
+
+        handles = [j.get_handle() for j in self.joints]
+
+        # Despite verbosity being set to 0, OMPL spits out a lot of text
+        with utils.suppress_std_out_and_err():
+            _, ret_floats, _, _ = utils.script_call(
+                'findSeveralCollisionFreeConfigsAndCheckApproach@PyRep', PYREP_SCRIPT_TYPE,
+                ints=[self._ik_group, self._collision_collection,
+                      int(ignore_collisions), trials, max_configs] + handles)
+        self._ik_target.set_pose(prev_pose)
+
+        if len(ret_floats) == 0:
+            raise ConfigurationError(
+                'Could not find a valid joint configuration for desired end effector pose.')
+
+        num_configs = int(len(ret_floats)/len(handles))
+        return [[ret_floats[len(handles)*i+j] for j in range(len(handles))] for i in range(num_configs)]
 
     def solve_ik(self, position: List[float], euler: List[float] = None,
                  quaternion: List[float] = None) -> List[float]:
@@ -125,7 +168,7 @@ class Arm(RobotComponent):
         handles = [j.get_handle() for j in self.joints]
 
         # Despite verbosity being set to 0, OMPL spits out a lot of text
-        with suppress_std_out_and_err():
+        with utils.suppress_std_out_and_err():
             _, ret_floats, _, _ = utils.script_call(
                 'getLinearPath@PyRep', PYREP_SCRIPT_TYPE,
                 ints=[steps, self._ik_group, self._collision_collection,
@@ -140,7 +183,7 @@ class Arm(RobotComponent):
                            euler: List[float] = None,
                            quaternion: List[float] = None,
                            ignore_collisions=False,
-                           trials=300, max_configs=60, trials_per_goal=6,
+                           trials=100, max_configs=60, trials_per_goal=6,
                            algorithm=Algos.SBL) -> ArmConfigurationPath:
         """Gets a non-linear (planned) configuration path given a target pose.
 
@@ -178,7 +221,7 @@ class Arm(RobotComponent):
         handles = [j.get_handle() for j in self.joints]
 
         # Despite verbosity being set to 0, OMPL spits out a lot of text
-        with suppress_std_out_and_err():
+        with utils.suppress_std_out_and_err():
             _, ret_floats, _, _ = utils.script_call(
                 'getNonlinearPath@PyRep', PYREP_SCRIPT_TYPE,
                 ints=[self._ik_group, self._collision_collection,
@@ -194,7 +237,7 @@ class Arm(RobotComponent):
                  euler: List[float] = None,
                  quaternion: List[float] = None,
                  ignore_collisions=False,
-                 trials=300, max_configs=60, trials_per_goal=6,
+                 trials=100, max_configs=60, trials_per_goal=6,
                  algorithm=Algos.SBL
                  ) -> ArmConfigurationPath:
         """Tries to get a linear path, failing that tries a non-linear path.
@@ -240,48 +283,3 @@ class Arm(RobotComponent):
         :return: The tip of the arm.
         """
         return self._ik_tip
-
-
-@contextmanager
-def suppress_std_out_and_err():
-    """Used for suppressing std out/err.
-
-    This is needed because the OMPL plugin outputs logging info even when
-    logging is turned off.
-    """
-
-    try:
-        # If we are using an IDE, then this will fail
-        original_stdout_fd = sys.stdout.fileno()
-        original_stderr_fd = sys.stderr.fileno()
-    except io.UnsupportedOperation:
-        # Nothing we can do about this, just don't suppress
-        yield
-        return
-
-    with open(os.devnull, "w") as devnull:
-
-        devnull_fd = devnull.fileno()
-
-        def _redirect_stdout(to_fd):
-            sys.stdout.close()
-            os.dup2(to_fd, original_stdout_fd)
-            sys.stdout = io.TextIOWrapper(os.fdopen(original_stdout_fd, 'wb'))
-
-        def _redirect_stderr(to_fd):
-            sys.stderr.close()
-            os.dup2(to_fd, original_stderr_fd)
-            sys.stderr = io.TextIOWrapper(os.fdopen(original_stderr_fd, 'wb'))
-
-        saved_stdout_fd = os.dup(original_stdout_fd)
-        # saved_stderr_fd = os.dup(original_stderr_fd)
-
-        try:
-            _redirect_stdout(devnull_fd)
-            # _redirect_stderr(devnull_fd)
-            yield
-            _redirect_stdout(saved_stdout_fd)
-            # _redirect_stderr(saved_stderr_fd)
-        finally:
-            os.close(saved_stdout_fd)
-            # os.close(saved_stderr_fd)

@@ -1,6 +1,7 @@
 from pyrep.robots.mobiles.mobile_base import MobileBase
 from pyrep.robots.configuration_paths.nonholonomic_configuration_path import (
     NonHolonomicConfigurationPath)
+<<<<<<< HEAD
 from pyrep.backend import utils
 from pyrep.const import ConfigurationPathAlgorithms as Algos
 from pyrep.const import PYREP_SCRIPT_TYPE
@@ -10,10 +11,23 @@ from math import sqrt
 
 
 class NonHolonomicBase(MobileBase):
+=======
+from pyrep.const import ConfigurationPathAlgorithms as Algos
+from pyrep.errors import ConfigurationPathError
+from typing import List
+from math import sqrt, atan2, sin, cos
+
+
+class NonHolonomicBase(MobileBase):
+    """Currently only differential drive robots.
+    Can be refactored to include other types of non-holonomic bases in future.
+    """
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
     def __init__(self,
                  count: int,
                  num_wheels: int,
+<<<<<<< HEAD
                  distance_from_target: float,
                  name: str,
                  max_velocity: float = 4,
@@ -31,6 +45,21 @@ class NonHolonomicBase(MobileBase):
         self.max_velocity = max_velocity
         self.max_vertical_rotation = max_velocity_rotation
         self.distance_from_target = distance_from_target
+=======
+                 name: str):
+
+        super().__init__(count, num_wheels, name)
+
+        self.cummulative_error = 0
+        self.prev_error = 0
+
+        # PID controller values.
+        # TODO: expose to user through constructor.
+        self.Kp = 1.0
+        self.Ki = 0.01
+        self.Kd = 0.1
+        self.desired_velocity = 0.05
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
     def get_linear_path(self, position: List[float],
                         angle=0) -> NonHolonomicConfigurationPath:
@@ -58,7 +87,13 @@ class NonHolonomicBase(MobileBase):
                 [position[0], position[1], angle]]
 
         if self._check_collision_linear_path(path):
+<<<<<<< HEAD
             raise ConfigurationPathError('Could not create path. An object was detected on the linear path.')
+=======
+            raise ConfigurationPathError(
+                'Could not create path. '
+                'An object was detected on the linear path.')
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
         return NonHolonomicConfigurationPath(self, path)
 
@@ -84,16 +119,25 @@ class NonHolonomicBase(MobileBase):
         """
 
         path = self._get_nonlinear_path_points(
+<<<<<<< HEAD
             position, angle, boundaries, path_pts, ignore_collisions)
+=======
+            position, angle, boundaries, path_pts, ignore_collisions, algorithm)
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
         return NonHolonomicConfigurationPath(self, path)
 
     def get_base_actuation(self):
+<<<<<<< HEAD
         """Proportional controller.
+=======
+        """A controller using PID.
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
 
         :return: A list with left and right joint velocity, and bool if target is reached.
         """
 
+<<<<<<< HEAD
         handleBase = self.get_handle()
         handle_inter_target_base = self.intermediate_target_base.get_handle()
         pos_v = self.target_base.get_position(relative_to=self)
@@ -119,3 +163,28 @@ class NonHolonomicBase(MobileBase):
         omega_jointL = v_L / (self.wheel_size / 2)
 
         return [omega_jointL, omega_jointR], False
+=======
+        d_x, d_y, _ = self.intermediate_target_base.get_position(
+            relative_to=self)
+
+        if sqrt((d_x) ** 2 + (d_y) ** 2) < 0.1:
+            return [0., 0.], True
+
+        alpha = atan2(d_y, d_x)
+        e = atan2(sin(alpha), cos(alpha))
+        e_P = e
+        e_I = self.cummulative_error + e
+        e_D = e - self.prev_error
+        w = self.Kp * e_P + self.Ki * e_I + self.Kd * e_D
+        w = atan2(sin(w), cos(w))
+
+        self.cummulative_error = self.cummulative_error + e
+        self.prev_error = e
+
+        vr = ((2. * self.desired_velocity + w * self.wheel_distance) /
+              (2. * self.wheel_radius))
+        vl = ((2. * self.desired_velocity - w * self.wheel_distance) /
+              (2. * self.wheel_radius))
+
+        return [vl, vr], False
+>>>>>>> 0c964caebc4c3a0bfae31725fddadd0405a68dc7
