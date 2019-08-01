@@ -120,6 +120,13 @@ class Shape(Object):
             options, shading_angle, vertices, indices)
         return Shape(handle)
 
+    def ungroup(self) -> List:
+        """Ungroup a compound shape into several simple shapes.
+
+        :return: A list containing handles of the resulting ungrouped shape.
+        """
+        return vrep.simUngroupShape(self._handle)
+
     def get_type(self) -> ObjectType:
         return ObjectType.SHAPE
 

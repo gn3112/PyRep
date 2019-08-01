@@ -607,6 +607,13 @@ def simGroupShapes(shapeHandles, merge=False):
     _check_return(handle)
     return handle
 
+def simUngroupShape(shapeHandle):
+    objectCount = ffi.new('int *')
+    handles = lib.simUngroupShape(shapeHandle, objectCount)
+    _check_null_return(handles)
+    ret = [handles[i] for i in range(objectCount[0])]
+    simReleaseBuffer(ffi.cast('char *', handles))
+    return ret
 
 def simGetShapeColor(shapeHandle, colorName, colorComponent):
     rgbData = ffi.new('float[3]')
@@ -955,10 +962,18 @@ def simHandleIkGroup(ikGroupHandle):
     _check_return(ret)
     return ret
 
-
 def simCheckIkGroup(ikGroupHandle, jointHandles):
     jointValues = ffi.new('float[%d]' % len(jointHandles))
     ret = lib.simCheckIkGroup(
         ikGroupHandle, len(jointHandles), jointHandles, jointValues, ffi.NULL)
     _check_return(ret)
     return ret, list(jointValues)
+
+def simGetLightParameters(objectHandle):
+    ret = lib.simGetLightParameters(objectHandle,ffi.NULL, ffi.NULL, ffi.NULL)
+    _check_return(ret)
+    return ret
+
+def simSetLightParameters(objectHandle, state, diffusePart, specularPart):
+    ret = lib.simSetLightParameters(objectHandle, state, ffi.NULL, diffusePart, specularPart);
+    _check_return(ret)

@@ -16,7 +16,7 @@ import time
 LOOPS = 4
 SCENE_FILE = join(dirname(abspath(__file__)), 'youbot.ttt')
 pr = PyRep()
-pr.launch(SCENE_FILE, headless=False)
+pr.launch(SCENE_FILE, headless=True)
 pr.start()
 agent = youBot()
 
