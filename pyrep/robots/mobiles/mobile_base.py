@@ -125,7 +125,7 @@ class MobileBase(RobotComponent):
 
         # Missing the dist1 for intermediate target
 
-        self.target_base.set_position([position[0], position[1], self.target_z])
+        self.target_base.set_position([position[0], position[1], position[2]])
         self.target_base.set_orientation([0, 0, angle])
 
         handle_base = self.get_handle()

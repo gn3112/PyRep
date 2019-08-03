@@ -81,7 +81,7 @@ class HolonomicBase(MobileBase):
         angle_base = self.get_orientation()[-1]
 
         self.target_base.set_position(
-            [position[0], position[1], self.target_z])
+            [position[0], position[1], position[2]])
         self.target_base.set_orientation([0, 0, angle])
 
         handle_base = self.get_handle()
@@ -94,7 +94,7 @@ class HolonomicBase(MobileBase):
         angle = ret_floats[-1]
         self.intermediate_target_base.set_position(
             [m[3] - m[0] * self.dist1, m[7] - m[4] * self.dist1,
-             self.target_z])
+             position[2]])
         self.intermediate_target_base.set_orientation([0, 0, angle])
         self.target_base.set_orientation([0, 0, angle])
 
