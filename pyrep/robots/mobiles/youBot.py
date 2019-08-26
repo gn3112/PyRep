@@ -2,6 +2,6 @@ from pyrep.robots.mobiles.holonomic_base import HolonomicBase
 
 
 class youBot(HolonomicBase):
-    def __init__(self, count: int = 0, distance_from_target: int = 0.3):
+    def __init__(self, count: int = 0, distance_from_target: int = 0.45):
         super().__init__(
             count, 4, distance_from_target, 'youBot', 4, 6, 0.035)
