@@ -931,12 +931,12 @@ def simGetScriptAssociatedWithObject(objectHandle):
     return ret
 
 
-def simCreateTexture(fileName, options):
+def simCreateTexture(fileName, options, resolution):
     # The textureID param that is returned from simCreateTexture seems
     # to be incorrect (in regards to calling simGetShapeTextureId on the
     # generated plane).
     handle = lib.simCreateTexture(fileName.encode('ascii'), options, ffi.NULL,
-                                  ffi.NULL, ffi.NULL, 0, ffi.NULL, ffi.NULL,
+                                  ffi.NULL, ffi.NULL, 0, resolution, ffi.NULL,
                                   ffi.NULL)
     _check_return(handle)
     return handle

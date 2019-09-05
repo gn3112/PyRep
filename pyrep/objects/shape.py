@@ -172,14 +172,14 @@ class Shape(Object):
         return vrep.simGetShapeColor(
             self._handle, None, vrep.sim_colorcomponent_ambient_diffuse)
 
-    def set_color(self, color: List[float]) -> None:
+    def set_color(self, color: List[float], transparent=False) -> None:
         """Sets the color of the shape.
 
         :param color: The r, g, b values of the shape.
         :return:
         """
         vrep.simSetShapeColor(
-            self._handle, None, vrep.sim_colorcomponent_ambient_diffuse, color)
+            self._handle, None, vrep.sim_colorcomponent_transparency if transparent else vrep.sim_colorcomponent_ambient_diffuse, color)
 
     def get_mass(self) -> float:
         """Gets the mass of the shape.
@@ -349,9 +349,9 @@ class Shape(Object):
         if decal_mode:
             options |= 2
         if repeat_along_u:
-            options |= 3
-        if repeat_along_v:
             options |= 4
+        if repeat_along_v:
+            options |= 8
         vrep.simSetShapeTexture(
             self.get_handle(), texture.get_texture_id(), mapping_mode.value,
             options, list(uv_scaling), position, orientation)

@@ -248,7 +248,7 @@ class PyRep(object):
         return utils.to_type(handle)
 
     def create_texture(self, filename: str, interpolate=True, decal_mode=False,
-                       repeat_along_u=False, repeat_along_v=False
+                       repeat_along_u=False, repeat_along_v=False, resolution=[128,128]
                        ) -> Tuple[Shape, Texture]:
         """Creates a planar shape that is textured.
 
@@ -269,6 +269,6 @@ class PyRep(object):
             options |= 3
         if repeat_along_v:
             options |= 4
-        handle = vrep.simCreateTexture(filename, options)
+        handle = vrep.simCreateTexture(filename, options, resolution)
         s = Shape(handle)
         return s, s.get_texture()

@@ -92,7 +92,7 @@ class Arm(RobotComponent):
         :param quaternion: A list containing the quaternion (x,y,z,w).
         :return: A list containing the calculated joint values.
         """
-        self._ik_target.set_position(position)
+        self._ik_target.set_position(position, )
         if euler is not None:
             self._ik_target.set_orientation(euler)
         elif quaternion is not None:
@@ -106,7 +106,7 @@ class Arm(RobotComponent):
         elif ik_result == vrep.sim_ikresult_not_performed:
             raise IKError('IK not performed.')
         return joint_values
-
+        
     def get_path_from_cartesian_path(self, path: CartesianPath
                                      ) -> ArmConfigurationPath:
         """Translate a path from cartesian space, to arm configuration space.
